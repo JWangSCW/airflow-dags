@@ -9,30 +9,25 @@ with DAG(
     catchup=False
 ) as dag:
 
-    run_dlt = KubernetesPodOperator(
+        run_dlt = KubernetesPodOperator(
         task_id="check_clickhouse_connection",
         name="dlt-test-pod",
         namespace="airflow",
-        image="python:3.11-slim",
+        # 1. Image complète (pas slim) pour éviter les erreurs de compilation
+        image="python:3.11", 
         cmds=["bash", "-cx"],
         arguments=[
-            # 1. On installe les dépendances
-            # 2. On transforme la variable Airflow en variable DLT au runtime
-            "pip install dlt[clickhouse] && "
-            "export DESTINATION__CLICKHOUSE__CREDENTIALS=$AIRFLOW_CONN_CLICKHOUSE_DEFAULT && "
-            "python -c '"
-            "import dlt; "
-            "import os; "
-            "data = [{\"status\": \"works\", \"env\": \"k8s\", \"timestamp\": \"2026-02-22\"}]; "
-            "pipeline = dlt.pipeline(pipeline_name=\"check_scw\", destination=\"clickhouse\", dataset_name=\"test_dlt\"); "
-            "info = pipeline.run(data, table_name=\"connection_check\"); "
-            "print(info)'"
+            # 2. Utilisation de guillemets doubles pour protéger le '&' du mot de passe
+            'pip install dlt[clickhouse] && '
+            'export DESTINATION__CLICKHOUSE__CREDENTIALS="$AIRFLOW_CONN_CLICKHOUSE_DEFAULT" && '
+            'python -c "'
+            'import dlt; '
+            'data = [{\'status\': \'works\', \'env\': \'k8s\', \'timestamp\': \'2026-02-22\'}]; '
+            'pipeline = dlt.pipeline(pipeline_name=\'check_scw\', destination=\'clickhouse\', dataset_name=\'test_dlt\'); '
+            'info = pipeline.run(data, table_name=\'connection_check\'); '
+            'print(info)"'
         ],
-        env_from=[{
-            "secretRef": {
-                "name": "dwh-connections-secret"
-            }
-        }],
+        env_from=[{"secretRef": {"name": "dwh-connections-secret"}}],
         get_logs=True,
-        is_delete_operator_pod=False 
+        is_delete_operator_pod=False
     )
