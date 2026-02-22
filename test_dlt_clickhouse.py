@@ -17,8 +17,9 @@ with DAG(
         image="python:3.11", 
         cmds=["bash", "-cx"],
         arguments=[
+            # On regroupe tout dans une seule chaîne Bash pour garantir l'ordre
+            'curl -k -v https://scwadmin:Xingyun2026!@195.154.197.217:8443 && ' # -k pour ignorer SSL si besoin
             'pip install dlt[clickhouse] && '
-            # Ici, on mappe la variable du secret vers la variable DLT
             'export DESTINATION__CLICKHOUSE__CREDENTIALS="$AIRFLOW_CONN_CLICKHOUSE_DEFAULT" && '
             'python -c "'
             'import dlt; '
