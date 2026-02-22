@@ -4,9 +4,9 @@ from datetime import datetime
 
 
 with DAG(
-    dag_id='test_dlt_connection',
-    start_date=datetime(2026, 2, 20),
-    schedule_interval="@daily",
+    dag_id="test_dlt_connection",
+    schedule="@daily",           # <--- Change juste le nom ici
+    start_date=datetime(2024, 1, 1),
     catchup=False
 ) as dag:
 
