@@ -17,8 +17,8 @@ with DAG(
         image="python:3.11", 
         cmds=["bash", "-cx"],
         arguments=[
-            # 2. Utilisation de guillemets doubles pour protéger le '&' du mot de passe
             'pip install dlt[clickhouse] && '
+            # Ici, on mappe la variable du secret vers la variable DLT
             'export DESTINATION__CLICKHOUSE__CREDENTIALS="$AIRFLOW_CONN_CLICKHOUSE_DEFAULT" && '
             'python -c "'
             'import dlt; '
