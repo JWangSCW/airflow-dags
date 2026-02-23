@@ -1,42 +1,25 @@
-from airflow import DAG
-from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
-from datetime import datetime
+from airflow.providers.cncf.kubernetes.operators.pod import KubernetesPodOperator
+from kubernetes.client import models as k8s
 
-with DAG(
-    dag_id='1_seed_postgres_source',
-    start_date=datetime(2026, 1, 1),
-    schedule=None,
-    catchup=False,
-    tags=['setup']
-) as dag:
-
-    seed_data = SQLExecuteQueryOperator(
-        task_id='create_and_populate_ecommerce',
-        conn_id='POSTGRES_SOURCE',
-        sql="""
-            CREATE SCHEMA IF NOT EXISTS ecommerce;
-            
-            CREATE TABLE IF NOT EXISTS ecommerce.users (
-                id SERIAL PRIMARY KEY,
-                name TEXT,
-                email TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-
-            CREATE TABLE IF NOT EXISTS ecommerce.orders (
-                id SERIAL PRIMARY KEY,
-                user_id INT,
-                amount DECIMAL(10,2),
-                status TEXT,
-                order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-
-            TRUNCATE ecommerce.users, ecommerce.orders RESTART IDENTITY;
-
-            INSERT INTO ecommerce.users (name, email) VALUES 
-            ('Alice Smith', 'alice@example.com'), ('Bob Jones', 'bob@example.com'), ('Charlie Brown', 'charlie@example.com');
-
-            INSERT INTO ecommerce.orders (user_id, amount, status) VALUES 
-            (1, 150.00, 'shipped'), (1, 25.50, 'pending'), (2, 300.00, 'shipped'), (3, 10.00, 'cancelled');
-        """
+# On appelle spécifiquement le NOUVEAU secret
+env_from_postgres = [
+    k8s.V1EnvFromSource(
+        secret_ref=k8s.V1SecretEnvSource(name='postgres-connection-secret')
     )
+]
+
+setup_tables = KubernetesPodOperator(
+    task_id='create_and_populate_ecommerce',
+    name='init-db-pod',
+    namespace='airflow',
+    image='postgres:15', # On utilise l'image postgres officielle qui contient psql
+    env_from=env_from_postgres,
+    cmds=["bash", "-cx"],
+    arguments=[
+        'psql "$AIRFLOW_CONN_POSTGRES_SOURCE" -c "'
+        'CREATE SCHEMA IF NOT EXISTS ecommerce; '
+        'CREATE TABLE IF NOT EXISTS ecommerce.users (id SERIAL PRIMARY KEY, name TEXT); '
+        'INSERT INTO ecommerce.users (name) VALUES (\'Alice\'), (\'Bob\');"'
+    ],
+    is_delete_operator_pod=True
+)
