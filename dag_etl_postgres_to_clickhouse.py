@@ -32,7 +32,7 @@ with DAG(
         cmds=["bash", "-cx"],
         arguments=[
             # Installation des drivers nécessaires
-            'pip install dlt[clickhouse] psycopg2-binary && '
+            'pip install "dlt[clickhouse,sql_database]" psycopg2-binary && '
             'python -c "'
             'import dlt; '
             'from dlt.sources.sql_database import sql_database; '
