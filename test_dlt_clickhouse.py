@@ -18,14 +18,22 @@ with DAG(
         image="python:3.11", 
         cmds=["bash", "-cx"],
         arguments=[
-            'pip install dlt[clickhouse] && '
-            'export DESTINATION__CLICKHOUSE__CREDENTIALS="$AIRFLOW_CONN_CLICKHOUSE_DEFAULT" && '
+            'pip install "dlt[clickhouse,sql_database]" psycopg2-binary && '
             'python -c "'
             'import dlt; '
-            'data = [{\'status\': \'public_test_https\', \'timestamp\': \'2026-02-23\'}]; '
-            'pipeline = dlt.pipeline(pipeline_name=\'check_scw_public\', destination=\'clickhouse\', dataset_name=\'test_dlt\'); '
-            'info = pipeline.run(data, table_name=\'connection_check\'); '
-            'print(info)"'
+            'from dlt.sources.sql_database import sql_database; '
+            'import os; '
+            # Conversion propre pour SQLAlchemy sans toucher au secret K8s
+            'pg_url = os.getenv(\'AIRFLOW_CONN_POSTGRES_SOURCE\').replace(\'postgres://\', \'postgresql://\'); '
+            'source = sql_database(pg_url, schema=\'ecommerce\'); '
+            # Configuration correcte du pipeline dlt
+            'pipeline = dlt.pipeline('
+            '    pipeline_name=\'pg_to_ch\', '
+            '    destination=dlt.destinations.clickhouse(credentials=os.getenv(\'AIRFLOW_CONN_CLICKHOUSE_DEFAULT\')), '
+            '    dataset_name=\'raw_data\''
+            '); '
+            'load_info = pipeline.run(source); '
+            'print(load_info)"'
         ],
         env_from=[{"secretRef": {"name": "dwh-connections-secret"}}],
         get_logs=True,
