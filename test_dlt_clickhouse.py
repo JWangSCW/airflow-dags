@@ -2,15 +2,10 @@ from airflow import DAG
 from airflow.providers.cncf.kubernetes.operators.pod import KubernetesPodOperator
 from datetime import datetime
 
-# with DAG(
-#     dag_id="test_dlt_connection",
-#     schedule="@daily",
-#     start_date=datetime(2024, 1, 1),
-#     catchup=False
-# ) as dag:
+
 with DAG(
     dag_id='test_dlt_connection',
-    schedule='@once',  # ou None
+    schedule='@once',
     start_date=datetime(2023, 1, 1),
     catchup=False,
 ) as dag:
