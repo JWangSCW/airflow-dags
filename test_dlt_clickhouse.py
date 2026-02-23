@@ -22,26 +22,23 @@ with DAG(
         # 1. Image complète (pas slim) pour éviter les erreurs de compilation
         image="python:3.11", 
         cmds=["bash", "-cx"],
-        # arguments=[
-        #     # On regroupe tout dans une seule chaîne Bash pour garantir l'ordre
-        #     'curl -k -v https://scwadmin:Xingyun2026!@195.154.197.217:8443 && ' # -k pour ignorer SSL si besoin
-        #     'pip install dlt[clickhouse] && '
-        #     'export DESTINATION__CLICKHOUSE__CREDENTIALS="$AIRFLOW_CONN_CLICKHOUSE_DEFAULT" && '
-        #     'python -c "'
-        #     'import dlt; '
-        #     'data = [{\'status\': \'works\', \'env\': \'k8s\', \'timestamp\': \'2026-02-22\'}]; '
-        #     'pipeline = dlt.pipeline(pipeline_name=\'check_scw\', destination=\'clickhouse\', dataset_name=\'test_dlt\'); '
-        #     'info = pipeline.run(data, table_name=\'connection_check\'); '
-        #     'print(info)"'
-        # ],
         arguments=[
-            'curl -v http://c2157035-def6-4dcb-bb99-47452fd8dd68.9b171428-b846-44b5-b93d-28b29b57a7c8.internal:8123 && '
+            # TEST 1 : Vérifier si le cluster sort sur Internet
+            'echo "--- TEST SORTIE INTERNET ---" && '
+            'curl -I https://www.google.com && ' 
+            
+            # TEST 2 : Vérifier la connectivité brute au port ClickHouse
+            'echo "--- TEST PORT CLICKHOUSE ---" && '
+            'curl -k -v https://195.154.197.217:8443 2>&1 | grep -E "Connected|refused|timeout" && '
+            
+            # TEST 3 : Exécution DLT avec les nouveaux paramètres
+            'echo "--- TEST DLT PIPELINE ---" && '
             'pip install dlt[clickhouse] && '
             'export DESTINATION__CLICKHOUSE__CREDENTIALS="$AIRFLOW_CONN_CLICKHOUSE_DEFAULT" && '
             'python -c "'
             'import dlt; '
-            'data = [{\'status\': \'private_works\', \'env\': \'kapsule_pn\'}]; '
-            'pipeline = dlt.pipeline(pipeline_name=\'check_scw_pn\', destination=\'clickhouse\', dataset_name=\'test_dlt\'); '
+            'data = [{\'status\': \'public_test\', \'timestamp\': \'2026-02-23\'}]; '
+            'pipeline = dlt.pipeline(pipeline_name=\'check_scw_public\', destination=\'clickhouse\', dataset_name=\'test_dlt\'); '
             'info = pipeline.run(data, table_name=\'connection_check\'); '
             'print(info)"'
         ],
