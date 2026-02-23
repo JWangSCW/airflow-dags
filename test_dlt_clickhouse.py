@@ -23,10 +23,9 @@ with DAG(
             'import dlt; '
             'from dlt.sources.sql_database import sql_database; '
             'import os; '
-            # Conversion propre pour SQLAlchemy sans toucher au secret K8s
-            'pg_url = os.getenv(\'AIRFLOW_CONN_POSTGRES_SOURCE\').replace(\'postgres://\', \'postgresql://\'); '
-            'source = sql_database(pg_url, schema=\'ecommerce\'); '
-            # Configuration correcte du pipeline dlt
+            # On utilise directement la variable car le secret est déjà au bon format
+            'source = sql_database(os.getenv(\'AIRFLOW_CONN_POSTGRES_SOURCE\'), schema=\'ecommerce\'); '
+            # Syntaxe obligatoire pour dlt 1.22.0 : credentials dans la destination
             'pipeline = dlt.pipeline('
             '    pipeline_name=\'pg_to_ch\', '
             '    destination=dlt.destinations.clickhouse(credentials=os.getenv(\'AIRFLOW_CONN_CLICKHOUSE_DEFAULT\')), '
