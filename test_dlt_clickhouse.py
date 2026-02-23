@@ -18,21 +18,14 @@ with DAG(
         image="python:3.11", 
         cmds=["bash", "-cx"],
         arguments=[
-            'pip install "dlt[clickhouse,sql_database]" psycopg2-binary && '
+            'pip install dlt[clickhouse] && '
+            'export DESTINATION__CLICKHOUSE__CREDENTIALS="$AIRFLOW_CONN_CLICKHOUSE_DEFAULT" && '
             'python -c "'
             'import dlt; '
-            'from dlt.sources.sql_database import sql_database; '
-            'import os; '
-            # On utilise directement la variable car le secret est déjà au bon format
-            'source = sql_database(os.getenv(\'AIRFLOW_CONN_POSTGRES_SOURCE\'), schema=\'ecommerce\'); '
-            # Syntaxe obligatoire pour dlt 1.22.0 : credentials dans la destination
-            'pipeline = dlt.pipeline('
-            '    pipeline_name=\'pg_to_ch\', '
-            '    destination=dlt.destinations.clickhouse(credentials=os.getenv(\'AIRFLOW_CONN_CLICKHOUSE_DEFAULT\')), '
-            '    dataset_name=\'raw_data\''
-            '); '
-            'load_info = pipeline.run(source); '
-            'print(load_info)"'
+            'data = [{\'status\': \'public_test_https\', \'timestamp\': \'2026-02-23\'}]; '
+            'pipeline = dlt.pipeline(pipeline_name=\'check_scw_public\', destination=\'clickhouse\', dataset_name=\'test_dlt\'); '
+            'info = pipeline.run(data, table_name=\'connection_check\'); '
+            'print(info)"'
         ],
         env_from=[{"secretRef": {"name": "dwh-connections-secret"}}],
         get_logs=True,
