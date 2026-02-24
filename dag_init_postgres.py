@@ -15,7 +15,7 @@ with DAG(
     # On appelle le secret créé via Terraform
     env_from_postgres = [
         k8s.V1EnvFromSource(
-            secret_ref=k8s.V1SecretEnvSource(name='postgres-connection-secret')
+            secret_ref=k8s.V1SecretEnvSource(name='pg-connection-secret')
         )
     ]
 

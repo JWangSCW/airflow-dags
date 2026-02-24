@@ -13,10 +13,10 @@ with DAG(
 
     env_from = [
         k8s.V1EnvFromSource(
-            secret_ref=k8s.V1SecretEnvSource(name='postgres-connection-secret')
+            secret_ref=k8s.V1SecretEnvSource(name='pg-connection-secret')
         ),
         k8s.V1EnvFromSource(
-            secret_ref=k8s.V1SecretEnvSource(name='dwh-connections-secret')
+            secret_ref=k8s.V1SecretEnvSource(name='dwh-connection-secret')
         )
     ]
 

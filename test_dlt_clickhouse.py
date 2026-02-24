@@ -27,7 +27,7 @@ with DAG(
             'info = pipeline.run(data, table_name=\'connection_check\'); '
             'print(info)"'
         ],
-        env_from=[{"secretRef": {"name": "dwh-connections-secret"}}],
+        env_from=[{"secretRef": {"name": "dwh-connection-secret"}}],
         get_logs=True,
         is_delete_operator_pod=False
     )
